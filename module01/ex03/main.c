@@ -12,8 +12,8 @@ int main() {
     uint8_t last_sw2 = 1;
 
     /* TOP = 62499 (frequency 1Hz)
-    ** F_CPU / Prescaler / Frequency - 1
-    ** 16.000.000 / 256 / 1 - 1 = 62499 */
+    ** F_CPU / Prescaler * Frequency - 1
+    ** 16.000.000 / 256 * 1 - 1 = 62499 */
     ICR1 = 62499;
 
     /* Duty cycle 10% TOP
