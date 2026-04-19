@@ -4,17 +4,6 @@ void led_init(void) { DDRB  |=  (1 << LED_PIN); }
 void led_on(void)   { PORTB |=  (1 << LED_PIN); }
 void led_off(void)  { PORTB &= ~(1 << LED_PIN); }
 
-static role_t read_role(void) {
-    return (PIND & (1 << PD2)) ? SLAVE : MASTER;
-}
-
-static void blink_wait(void) {
-    led_on();
-    _delay_ms(100);
-    led_off();
-    _delay_ms(100);
-}
-
 // Debounce for read button
 static uint8_t read_button_stable(uint8_t pin) {
     uint8_t state = (PIND & (1 << pin)) ? 1 : 0;
@@ -22,55 +11,43 @@ static uint8_t read_button_stable(uint8_t pin) {
     return ((PIND & (1 << pin)) ? 1 : 0) == state ? state : 255; // 255 = unstable
 }
 
-// wait for button be pressed (LOW) and return role
-static role_t wait_for_role_selection(void) {
-    while (1) {
-        // blink to sinalize"waiting"
-        blink_wait();
-
-        //(MASTER)
-        if (read_button_stable(PD2) == 0) {
-            _delay_ms(300); // aguarda soltar
-            while (read_button_stable(PD2) == 0);
-            _delay_ms(200);
-            led_on();
-            _delay_ms(500);
-            led_off();
-            return MASTER;
-        }
-
-        //(SLAVE)
-        if (read_button_stable(PD4) == 0) {
-            _delay_ms(300); // aguarda soltar
-            while (read_button_stable(PD4) == 0);
-            _delay_ms(200);
-            led_on();
-            _delay_ms(1000);
-            led_off();
-            return SLAVE;
-        }
-    }
+// Check if button is pressed (stable LOW)
+static uint8_t button_pressed(uint8_t pin) {
+    return read_button_stable(pin) == 0;
 }
 
 int main(void) {
     led_init();
+    DDRD  &= ~(1 << PD2);
+    PORTD |=  (1 << PD2);
 
-    // config pin as inputs with pull-up
-    DDRD &= ~(1 << PD2); // PD2 input
-    DDRD &= ~(1 << PD4); // PD4 input
-    PORTD |= (1 << PD2); // pull-up
-    PORTD |= (1 << PD4); // pull-up
+    // all are slaves
+    i2c_init_slave(SLAVE_ADDR);
 
-    role_t role = wait_for_role_selection();
+    // Fase negociation only moment can become master
+    while (get_current_role() == SLAVE) {
+        uint8_t data = 0;
 
-    // initialize I2C
-    if (role == MASTER)
-        i2c_init_master();
-    else
-        i2c_init_slave(SLAVE_ADDR);
+        // waiting for inicialization
+        led_on();
+        _delay_ms(100);
+        led_off();
+        // if already received slave confirmation, ignore button
+        if (i2c_slave_poll(&data) && data == MSG_YOU_ARE_SLAVE) {
+            break; // role defined as SLAVE, go out of negociation
+        }
 
+        // Just try to be master if no slave is confirmed
+        if (button_pressed(PD2)) {
+            _delay_ms(300);
+            while (button_pressed(PD2));
+            switch_to_master();
+        }
+    }
+
+    // Roles defined loop game
     while (1) {
-        if (role == MASTER)
+        if (get_current_role() == MASTER)
             run_master();
         else
             run_slave();

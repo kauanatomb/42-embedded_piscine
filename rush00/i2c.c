@@ -1,6 +1,14 @@
 #include "i2c.h"
 
 void run_master(void) {
+    // TODO: game logic
+    // Rule 1: both players press button to start
+    // Rule 2: countdown displayed on LEDs
+    // Rule 3: fastest player to press button wins
+    // Rule 4: pressing before countdown ends = lose
+
+    // just to check communication
+    led_on(); _delay_ms(2000); led_off(); // master is in main loop
     if (i2c_start(SLAVE_ADDR << 1 | TW_WRITE) == 0) {
         i2c_write(MSG_PING);
         i2c_stop();
@@ -14,7 +22,7 @@ void run_slave(void) {
 
     if (status == TW_SR_DATA_ACK && data == MSG_PING) {
         led_on();
-        _delay_ms(200);
+        _delay_ms(100);
         led_off();
     }
 }
@@ -24,16 +32,9 @@ static void twi_wait(void) {
     while (!(TWCR & (1 << TWINT)));
 }
 
-void i2c_init_master(void) {
-    TWBR = TWBR_VAL;
-    TWSR = (0 << TWPS1) | (0 << TWPS0); // prescaler = 1 (p.222)
-}
-
-void i2c_init_slave(uint8_t addr) {
-    TWAR = addr << 1; // slave address (bit 0 = TWGCE, let 0) (p.235)
-    TWCR = (1 << TWEN) // enable TWI
-         | (1 << TWEA) // enable ACK
-         | (1 << TWINT); // clean flag
+// Get current role
+role_t get_current_role(void) {
+    return current_role;
 }
 
 // rewturn 0 if START+address OK, 1 if fail (loose arbitragem or NACK) (p.223, 224, 229)

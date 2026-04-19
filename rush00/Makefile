@@ -8,12 +8,13 @@ CFLAGS = -mmcu=$(MCU) -DF_CPU=$(F_CPU) -Os
 
 all: hex flash
 
-hex: main.c i2c.c
-	$(CC) $(CFLAGS) -o main.elf main.c i2c.c
+hex: main.c i2c.c setup.c
+	$(CC) $(CFLAGS) -o main.elf main.c i2c.c setup.c
 	$(OBJCOPY) -O ihex main.elf main.hex
 
 flash: main.hex
 	$(DUDE) -c arduino -p $(MCU) -P /dev/ttyUSB0 -b 115200 -U flash:w:main.hex
+	$(DUDE) -c arduino -p $(MCU) -P /dev/ttyUSB1 -b 115200 -U flash:w:main.hex
 
 clean:
 	rm -f main.elf main.hex
