@@ -7,11 +7,8 @@ void start_game_master(void) {
 
     while (!master_ready || !slave_ready) {
         // verify local button
-        if (!master_ready && button_pressed(PD2)) {
-            _delay_ms(300);
-            while (button_pressed(PD2));
+        if (!master_ready && button_pressed(PD2))
             master_ready = 1;
-        }
 
         // poll slave
         if (i2c_start(SLAVE_ADDR << 1 | TW_WRITE) == 0) {
@@ -71,11 +68,11 @@ uint8_t countdown(void) {
         led_on();
         _delay_ms(200);
         led_off();
-        if (get_current_role() == MASTER) {
-            // if master pressed his button here signalize to slave to stop countdown
-            // listen to slave if he presses his button and stop countdown
-            return 1;
-        }
+        // if (get_current_role() == MASTER) {
+        //     // if master pressed his button here signalize to slave to stop countdown
+        //     // listen to slave if he presses his button and stop countdown
+        //     return 1;
+        // }
     }
     return 0;
 }
