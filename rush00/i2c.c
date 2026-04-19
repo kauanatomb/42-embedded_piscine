@@ -5,8 +5,10 @@ void run_master(void) {
     // Rule 1: both players press button to start
     start_game_master();
     // Rule 2: countdown displayed on LEDs
-    if (countdown())
-        return;
+    if (countdown()) {
+        // button_pressed_early();
+        return ;
+    }
     // Rule 3: fastest player to press button wins
     
     // Rule 4: pressing before countdown ends = lose
@@ -21,18 +23,23 @@ void run_master(void) {
 }
 
 void run_slave(void) {
-    // uint8_t data = 0;
-    // uint8_t status = i2c_slave_listen(&data);
-
-    // if (status == TW_SR_DATA_ACK && data == MSG_POLL)
+    
     start_game_slave();
-    if (countdown())
-        return;
-    // if (status == TW_SR_DATA_ACK && data == MSG_PING) {
-    //     led_on();
-    //     _delay_ms(100);
-    //     led_off();
-    // }
+    uint8_t data = 0;
+    uint8_t status = i2c_slave_listen(&data);
+    while (!button_pressed(PD2)) {
+        TWDR = BUTTON_PRESSED;
+        TWCR = (1 << TWEN) | (1 << TWEA) | (1 << TWINT);
+        twi_wait();
+        if ((TWSR & 0xF8) == TW_ST_SLA_ACK) {
+            TWCR = (1 << TWINT) | (1 << TWEN);
+            twi_wait();
+        }
+        if (data == STOP) {
+            break ;
+        }
+    }
+    // case the button was pressed
 }
 
 // wait TWI finishs (p. 225)

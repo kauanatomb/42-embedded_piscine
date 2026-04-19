@@ -1,5 +1,33 @@
 #include "i2c.h"
 
+uint8_t stop_game_master(void) {
+    uint8_t slave_ready = 0;
+
+    while (!slave_ready) {
+
+        // poll slave
+        if (i2c_start(SLAVE_ADDR << 1 | TW_WRITE) == 0) {
+            i2c_write(MSG_POLL);
+            i2c_stop();
+        }
+        if (i2c_start(SLAVE_ADDR << 1 | TW_READ) == 0) {
+            uint8_t response = i2c_read_nack();
+            i2c_stop();
+            if (response == MSG_READY)
+                slave_ready = 1;
+        }
+        _delay_ms(50);
+    }
+
+    // both ready
+    if (i2c_start(SLAVE_ADDR << 1 | TW_WRITE) == 0) {
+        i2c_write(STOP);
+        i2c_stop();
+        return 1;
+    }
+    return 0;
+}
+
 // master: poll until both are ready
 void start_game_master(void) {
     uint8_t master_ready = 0;
@@ -60,7 +88,7 @@ void start_game_slave(void) {
 }
 
 uint8_t countdown(void) {
-    for(int i = 6; i > 0; i--) {
+    for (int i = 6; i > 0; i--) {
         led_on();
         _delay_ms(200);
         led_off();
@@ -68,10 +96,22 @@ uint8_t countdown(void) {
         led_on();
         _delay_ms(200);
         led_off();
-        // if (get_current_role() == MASTER) {
-        //     // if master pressed his button here signalize to slave to stop countdown
-        //     // listen to slave if he presses his button and stop countdown
-        //     return 1;
+        if (button_pressed(PD2)) {
+            // write mode
+            // here signalize to slave to stop countdown
+            // write STOP
+            if (stop_game_master() == 1)
+                return 1;
+        }
+        if (i2c_start(SLAVE_ADDR << 1 | TW_READ) == 0) {
+            uint8_t response = i2c_read_nack();
+            i2c_stop();
+            if (response == BUTTON_PRESSED)
+                return 1;
+        }
+        // if (get_current_role() == MASTER)
+        // {
+        //     read;
         // }
     }
     return 0;
