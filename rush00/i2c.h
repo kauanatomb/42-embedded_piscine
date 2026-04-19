@@ -18,12 +18,14 @@
 #define TWBR_VAL 72
 
 typedef enum { SLAVE = 0, MASTER = 1 } role_t;
+typedef enum { START_GAME = 0 } game_t;
 extern role_t current_role;
 
-// LED functions
+// LED  and buttons functions
 void led_init(void);
 void led_on(void);
 void led_off(void);
+uint8_t button_pressed(uint8_t pin);
 
 // I2C functions
 uint8_t i2c_start(uint8_t addr_rw); // return 0 if OK
@@ -32,6 +34,7 @@ void i2c_write(uint8_t data);
 uint8_t i2c_read_ack(void);
 uint8_t i2c_read_nack(void);
 uint8_t i2c_slave_listen(uint8_t *data); // return status
+void twi_wait(void);
 
 // Main functions
 void run_master(void);
@@ -44,5 +47,10 @@ void switch_to_master(void);
 role_t get_current_role(void);
 void run_master_signal(void);
 uint8_t i2c_slave_poll(uint8_t *data);
+
+// game
+void countdown(void);
+void start_game_slave(void);
+void start_game_master(void);
 
 #endif

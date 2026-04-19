@@ -12,7 +12,7 @@ static uint8_t read_button_stable(uint8_t pin) {
 }
 
 // Check if button is pressed (stable LOW)
-static uint8_t button_pressed(uint8_t pin) {
+uint8_t button_pressed(uint8_t pin) {
     return read_button_stable(pin) == 0;
 }
 

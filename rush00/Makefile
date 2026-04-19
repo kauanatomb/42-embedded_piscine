@@ -8,8 +8,8 @@ CFLAGS = -mmcu=$(MCU) -DF_CPU=$(F_CPU) -Os
 
 all: hex flash
 
-hex: main.c i2c.c setup.c
-	$(CC) $(CFLAGS) -o main.elf main.c i2c.c setup.c
+hex: main.c i2c.c setup.c game.c
+	$(CC) $(CFLAGS) -o main.elf main.c i2c.c setup.c game.c
 	$(OBJCOPY) -O ihex main.elf main.hex
 
 flash: main.hex

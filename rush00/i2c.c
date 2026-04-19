@@ -3,32 +3,35 @@
 void run_master(void) {
     // TODO: game logic
     // Rule 1: both players press button to start
+    start_game_master();
     // Rule 2: countdown displayed on LEDs
     // Rule 3: fastest player to press button wins
     // Rule 4: pressing before countdown ends = lose
 
     // just to check communication
-    led_on(); _delay_ms(2000); led_off(); // master is in main loop
-    if (i2c_start(SLAVE_ADDR << 1 | TW_WRITE) == 0) {
-        i2c_write(MSG_PING);
-        i2c_stop();
-    }
-    _delay_ms(1000);
+    // led_on(); _delay_ms(2000); led_off(); // master is in main loop
+    // if (i2c_start(SLAVE_ADDR << 1 | TW_WRITE) == 0) {
+    //     i2c_write(MSG_PING);
+    //     i2c_stop();
+    // }
+    // _delay_ms(1000);
 }
 
 void run_slave(void) {
     uint8_t data = 0;
     uint8_t status = i2c_slave_listen(&data);
 
-    if (status == TW_SR_DATA_ACK && data == MSG_PING) {
-        led_on();
-        _delay_ms(100);
-        led_off();
-    }
+    if (status == TW_SR_DATA_ACK && data == START_GAME)
+        start_game_slave();
+    // if (status == TW_SR_DATA_ACK && data == MSG_PING) {
+    //     led_on();
+    //     _delay_ms(100);
+    //     led_off();
+    // }
 }
 
 // wait TWI finishs (p. 225)
-static void twi_wait(void) {
+void twi_wait(void) {
     while (!(TWCR & (1 << TWINT)));
 }
 
