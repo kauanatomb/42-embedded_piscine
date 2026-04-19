@@ -8,7 +8,7 @@ void led_off(void)  { PORTB &= ~(1 << LED_PIN); }
 static uint8_t read_button_stable(uint8_t pin) {
     uint8_t state = (PIND & (1 << pin)) ? 1 : 0;
     _delay_ms(20);
-    return ((PIND & (1 << pin)) ? 1 : 0) == state ? state : 255; // 255 = unstable
+    return ((PIND & (1 << pin)) ? 1 : 0);
 }
 
 // Check if button is pressed (stable LOW)
@@ -39,8 +39,6 @@ int main(void) {
 
         // Just try to be master if no slave is confirmed
         if (button_pressed(PD2)) {
-            _delay_ms(300);
-            while (button_pressed(PD2));
             switch_to_master();
         }
     }
