@@ -61,9 +61,6 @@ void init_rgb() {
     DDRD |= (1 << RED);
     DDRD |= (1 << GREEN);
 
-    // force LOW manually
-    PORTD &= ~((1 << BLUE) | (1 << RED) | (1 << GREEN));
-
     // initialize off (avoid glitch)
     OCR0A = 0;
     OCR0B = 0;
