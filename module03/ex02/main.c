@@ -17,12 +17,13 @@ void init_rgb() {
 
     // setup timer0
     TCCR0A = (1 << WGM01) | (1 << WGM00) | (1 << COM0B1) | (1 << COM0A1);
-    TCCR0B = (1 << CS01);
+    TCCR0B = (1 << CS01) | (1 << CS00); // prescaler 64
 
     // setup timer2
     TCCR2A = (1 << WGM21) | (1 << WGM20) | (1 << COM2B1);
-    TCCR2B = (1 << CS21);
+    TCCR2B = (1 << CS22); // prescaler 64
 
+    // initialize off (avoid glitch)
     OCR0A = 0;
     OCR0B = 0;
     OCR2B = 0;
