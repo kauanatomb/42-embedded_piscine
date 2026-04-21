@@ -2,39 +2,35 @@
 #include <util/delay.h>
 
 #define RED PD5
-#define BLUE PD3
 #define GREEN PD6
+#define BLUE PD3
 
 void init_rgb() {
-    // config timer0
-    /* PD5 (OC0B) as output */
+    // config timer0 and timer2
+    /* PD5 (OC0B) as output 
+       PD6 (0C0A) as output
+       PD3 (OC2B) as output
+    */
     DDRD |= (1 << BLUE);
     DDRD |= (1 << RED);
     DDRD |= (1 << GREEN);
 
-    /* TOP = 62499 (frequency 1Hz)
-    ** F_CPU / Prescaler / Frequency - 1
-    ** 16.000.000 / 256 / 1 - 1 = 62499 */
-    ICR1 = 62499;
+    // setup timer0
+    TCCR0A = (1 << WGM01) | (1 << WGM00) | (1 << COM0B1) | (1 << COM0A1);
+    TCCR0B = (1 << CS01);
 
-    /* Duty cycle 50% TOP
-    ** 62499 * 0.10 = 6249 */
-    OCR0B = 128;
-
-    // timer0
-    TCCR0A = (1 << WGM01) | (1 << WGM00);   // Fast PWM
-    TCCR0B = (1 << CS01);                  // prescaler
-    TCCR0A |= (1 << COM0A1) | (1 << COM0B1);
-
-    // timer2
-    TCCR2A = (1 << WGM21) | (1 << WGM20);
+    // setup timer2
+    TCCR2A = (1 << WGM21) | (1 << WGM20) | (1 << COM2B1);
     TCCR2B = (1 << CS21);
-    TCCR2A |= (1 << COM2B1);
+
+    OCR0A = 0;
+    OCR0B = 0;
+    OCR2B = 0;
 }
 
 void set_rgb(uint8_t r, uint8_t g, uint8_t b) {
-    OCR0A = r;  // PD6
-    OCR0B = g;  // PD5
+    OCR0B = r;  // PD5
+    OCR0A = g;  // PD6
     OCR2B = b;  // PD3
 }
 
@@ -55,7 +51,7 @@ int main() {
     init_rgb();
     while (1)
     {
-        for (uint8_t i = 0; i < 255; i++)
+        for (uint8_t i = 0; i < 256; i++)
         {
             wheel(i);
             _delay_ms(10);
