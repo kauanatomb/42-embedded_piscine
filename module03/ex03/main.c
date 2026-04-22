@@ -43,7 +43,7 @@ void uart_init(void)
     UBRR0H = (uint8_t)(UBRR_VALUE >> 8);
     UBRR0L = (uint8_t)(UBRR_VALUE);
 
-    // Enable TX and RX (p.201)
+    // Enable TX and RX and USART Receive Complete interrupt (p.201)
     UCSR0B = (1 << TXEN0) | (1 << RXEN0) | (1 << RXCIE0);;
 
     // UCSZ01:UCSZ00 = 1:1 -> 8 data bits, USBS0=0 -> 1 stop bit,
