@@ -30,10 +30,9 @@ void timers_init(void)
 {
     DDRB |= (1 << PB1);
     //timer1
-    /* f_PWM = F_CPU / (prescaler * (1 + TOP))
+    /* f_PWM = (F_CPU / (prescaler * TOP)) - 1) 
     TOP = (16_000_000 / (64 * 1000)) - 1
-    = 250 - 1
-    ** 16.000.000 / (64 * 1 - 1000) = 62499 */
+    = 250 - 1*/
     ICR1 = 249; // high frequency
 
     /* Duty cycle will be increased by interruption */
@@ -46,14 +45,18 @@ void timers_init(void)
 
     /* TCCR1B:
     ** WGM13=1, WGM12=1 -> Fast PWM TOP=ICR1 high part (modo 14)
-    ** Prescaler 64 — inicialize the timer */
+    ** Prescaler 64 */
     TCCR1B = (1 << WGM13) | (1 << WGM12) | (1 << CS11) | (1 << CS10);
 
     // timer0 - CTC mode
-    TCCR0A = (1 << WGM01) | (1 << WGM00) | (1 << COM0B1) | (1 << COM0A1);
+    TCCR0A = (1 << WGM01);
     TCCR0B = (1 << CS02); // prescaler 256
     TIMSK0 |= (1 << OCIE0A);
-    OCR0A = 78;
+    /*OCR0A = (16_000_000 / (256 * 498)) - 1
+    OCR0A = (16_000_000 / 127,488) - 1
+    OCR0A = 125.5 - 1
+    OCR0A = 124*/
+    OCR0A = 124;
 
     // Enable global interrupts (p.20)
     SREG |= (1 << 7);
