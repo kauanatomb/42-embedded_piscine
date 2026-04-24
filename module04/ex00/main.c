@@ -8,7 +8,9 @@ volatile uint8_t button_pressed = 0;
 // 2 -1 -> INT0 External Interrupt Request 0 (p.74)
 void __vector_1(void) __attribute__((signal, used));
 void __vector_1(void) {
-    EIMSK &= ~(1 << INT0);  // disable INT0 for the moment
+    /* disable INT0 for the moment: to avoid multi interruption
+        caused by the bounce of button*/
+    EIMSK &= ~(1 << INT0);
     button_pressed = 1;
 }
 
@@ -30,8 +32,8 @@ int main() {
             _delay_ms(190);
             PORTB ^= (1 << PB0);
             button_pressed = 0;
-            EIFR  |= (1 << INTF0);
-            EIMSK |= (1 << INT0);
+            EIFR  |= (1 << INTF0); // clean flag interruption
+            EIMSK |= (1 << INT0); // enable
         }
     }
 }
