@@ -18,19 +18,24 @@ void __vector_5(void) __attribute__((signal, used));
 void __vector_5(void)
 {
     uint8_t current = PIND;
+    uint8_t changed = current ^ last_PIND;
 
-    if ((current & (1 << PD2)) == 0 &&
-        (last_PIND & (1 << PD2)))
-    {
-        value++;
-        display(value);
+    if ((changed & (1 << PD2)) && !(current & (1 << PD2))) {
+        _delay_ms(30);
+
+        if (!(PIND & (1 << PD2))) {
+            value++;
+            display(value);
+        }
     }
 
-    if ((current & (1 << PD4)) == 0 &&
-        (last_PIND & (1 << PD4)))
-    {
-        value--;
-        display(value);
+    if ((changed & (1 << PD4)) && !(current & (1 << PD4))) {
+        _delay_ms(30);
+
+        if (!(PIND & (1 << PD4))) {
+            value--;
+            display(value);
+        }
     }
 
     last_PIND = current;
