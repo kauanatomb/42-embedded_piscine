@@ -38,10 +38,11 @@ void __vector_5(void)
 
 void interrupts_init(void)
 {
+    // Pin Change Interrupt Control Register (p.82)
     PCICR |= (1 << PCIE2);
-
-    PCMSK2 |= (1 << PCINT18);
-    PCMSK2 |= (1 << PCINT20);
+    // Pin Change Mask Register 2 (p.83)
+    PCMSK2 |= (1 << PCINT18); // PD2
+    PCMSK2 |= (1 << PCINT20); // PD4
 
     last_PIND = PIND;
 
