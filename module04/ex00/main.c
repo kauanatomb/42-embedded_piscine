@@ -1,39 +1,79 @@
 #include <avr/io.h>
-#include <util/delay.h>
 #include <avr/interrupt.h>
 
+volatile uint8_t debounce_ticks = 0;
+volatile uint8_t debounce_active = 0;  // Flag: 1=processing, 0=idle
+volatile uint8_t state = 0;            // 0=waiting failling, 1=waiting rising
 volatile uint8_t button_pressed = 0;
 
-// each event on hardware has its own vector number
-// 2 -1 -> INT0 External Interrupt Request 0 (p.74)
+// INT0: falling or rising
 void __vector_1(void) __attribute__((signal, used));
 void __vector_1(void) {
-    /* disable INT0 for the moment: to avoid multi interruption
-        caused by the bounce of button*/
-    EIMSK &= ~(1 << INT0);
+    if (!debounce_active) {
+        EIMSK &= ~(1 << INT0);
+        debounce_ticks = 3; // 48ms
+        debounce_active = 1;
+    }
+}
+
+// Timer0 Compare Match A (CTC mode)
+void __vector_14(void) __attribute__((signal, used));
+void __vector_14(void) {
+    if (!debounce_active) return;  // does nothing if debounce inactive
+    
+    if (debounce_ticks > 0) {
+        debounce_ticks--;
+        return;
+    }
+    
     button_pressed = 1;
 }
 
 int main() {
-    // config out
     DDRB |= (1 << PB0);
-    //config in
     DDRD &= ~(1 << PD2);
-    // pull up
     PORTD |= (1 << PD2);
 
-    EICRA = (EICRA & ~((1 << ISC01) | (1 << ISC00))) | (1 << ISC01); // falling edge (p.80)
-    EIFR |= (1 << INTF0); // NTF0: External Interrupt Flag 0 (p.81)
-    EIMSK |= (1 << INT0); // INT0: External Interrupt Request 0 Enable (p.81)
-    SREG |= (1 << 7);
+    // INT0: falling edge initial
+    EICRA = (1 << ISC01);
+    EIFR |= (1 << INTF0);
+    EIMSK |= (1 << INT0);
+
+    // Timer0 - CTC mode
+    TCCR0A = (1 << WGM01);
+    TCCR0B = (1 << CS02);
+    OCR0A = 124;
+    TIMSK0 |= (1 << OCIE0A);
+
+    SREG = (1 << 7);
 
     while (1) {
         if (button_pressed) {
-            _delay_ms(190);
-            PORTB ^= (1 << PB0);
+            // Debounce finished
+            if (state == 0) {
+                // Falling edge confirmed
+                PORTB ^= (1 << PB0);        // Toggle
+                state = 1;                  // wait rising edge
+                
+                EIFR |= (1 << INTF0);
+                // Desabilita ANTES de reconfigurar
+                EIMSK &= ~(1 << INT0);
+                // Config INT0 to rising edge
+                EICRA = (EICRA & ~((1 << ISC01) | (1 << ISC00))) | ((1 << ISC01) | (1 << ISC00));
+            } 
+            else if (state == 1) {
+                // Rising edge confirmed
+                state = 0; // wait for falling edge
+                
+                EIFR |= (1 << INTF0);
+                // Desabilita ANTES de reconfigurar
+                EIMSK &= ~(1 << INT0);
+                // config INT0 to falling edge
+                EICRA = (EICRA & ~((1 << ISC01) | (1 << ISC00))) | (1 << ISC01);
+            }
             button_pressed = 0;
-            EIFR  |= (1 << INTF0); // clean flag interruption
-            EIMSK |= (1 << INT0); // enable
+            debounce_active = 0;  // desactivate debounce
+            EIMSK |= (1 << INT0); // enable INT0
         }
     }
 }
