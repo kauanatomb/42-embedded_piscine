@@ -4,29 +4,46 @@
 volatile uint8_t debounce_ticks = 0;
 volatile uint8_t debounce_active = 0;  // Flag: 1=processing, 0=idle
 volatile uint8_t state = 0;            // 0=waiting failling, 1=waiting rising
-volatile uint8_t button_pressed = 0;
 
 // INT0: falling or rising
 void __vector_1(void) __attribute__((signal, used));
 void __vector_1(void) {
     if (!debounce_active) {
         EIMSK &= ~(1 << INT0);
-        debounce_ticks = 3; // 48ms
+        debounce_ticks = 5; // 80ms
         debounce_active = 1;
     }
 }
 
-// Timer0 Compare Match A (CTC mode)
+// 15 - 1 TIMER0 COMPA Timer/Counter0 Compare Match A
 void __vector_14(void) __attribute__((signal, used));
 void __vector_14(void) {
-    if (!debounce_active) return;  // does nothing if debounce inactive
+    if (!debounce_active) return; // does nothing if debounce inactive
     
     if (debounce_ticks > 0) {
         debounce_ticks--;
         return;
     }
-    
-    button_pressed = 1;
+
+    if (state == 0) {
+        // Falling edge confirmed
+        PORTB ^= (1 << PB0);
+        state = 1;
+        EIFR |= (1 << INTF0);
+        EIMSK &= ~(1 << INT0);
+        // Config INT0 to rising edge
+        EICRA = (EICRA & ~((1 << ISC01) | (1 << ISC00))) | ((1 << ISC01) | (1 << ISC00));
+    } 
+    else if (state == 1) {
+        // Rising edge confirmed
+        state = 0; // wait for falling edge
+        EIFR |= (1 << INTF0);
+        EIMSK &= ~(1 << INT0);
+        // config INT0 to falling edge
+        EICRA = (EICRA & ~((1 << ISC01) | (1 << ISC00))) | (1 << ISC01);
+    }
+    debounce_active = 0;  // desactivate debounce
+    EIMSK |= (1 << INT0); // enable INT0
 }
 
 int main() {
@@ -47,33 +64,5 @@ int main() {
 
     SREG = (1 << 7);
 
-    while (1) {
-        if (button_pressed) {
-            // Debounce finished
-            if (state == 0) {
-                // Falling edge confirmed
-                PORTB ^= (1 << PB0);        // Toggle
-                state = 1;                  // wait rising edge
-                
-                EIFR |= (1 << INTF0);
-                // Desabilita ANTES de reconfigurar
-                EIMSK &= ~(1 << INT0);
-                // Config INT0 to rising edge
-                EICRA = (EICRA & ~((1 << ISC01) | (1 << ISC00))) | ((1 << ISC01) | (1 << ISC00));
-            } 
-            else if (state == 1) {
-                // Rising edge confirmed
-                state = 0; // wait for falling edge
-                
-                EIFR |= (1 << INTF0);
-                // Desabilita ANTES de reconfigurar
-                EIMSK &= ~(1 << INT0);
-                // config INT0 to falling edge
-                EICRA = (EICRA & ~((1 << ISC01) | (1 << ISC00))) | (1 << ISC01);
-            }
-            button_pressed = 0;
-            debounce_active = 0;  // desactivate debounce
-            EIMSK |= (1 << INT0); // enable INT0
-        }
-    }
+    while (1) {}
 }
