@@ -37,8 +37,8 @@ void __vector_14(void) {
     else if (state == 1) {
         // Rising edge confirmed
         state = 0; // wait for falling edge
-        EIFR |= (1 << INTF0);
-        EIMSK &= ~(1 << INT0);
+        EIFR |= (1 << INTF0); // clean flag
+        EIMSK &= ~(1 << INT0); // to ignore interruptions
         // config INT0 to falling edge
         EICRA = (EICRA & ~((1 << ISC01) | (1 << ISC00))) | (1 << ISC01);
     }
