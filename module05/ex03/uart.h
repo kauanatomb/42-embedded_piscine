@@ -3,6 +3,7 @@
 
 #include <avr/io.h>
 #include <util/delay.h>
+#include <avr/interrupt.h>
 
 #ifndef UART_BAUDRATE
 # define UART_BAUDRATE 115200

@@ -3,6 +3,17 @@
 #define TEMP_TOS 324
 #define TEMP_K_X100 122
 
+// each event on hardware has its own vector number
+// 12 - 1 -> timer1 compare match A
+void __vector_11(void) __attribute__((signal, used));
+void __vector_11(void)
+{
+    uint16_t temp_raw = adc_read_temp();
+    int16_t temp = (int16_t)(((int32_t)(temp_raw - TEMP_TOS) * 100) / TEMP_K_X100);
+    uart_print_dec(temp);
+    uart_puts("\r\n");
+}
+
 static void uart_init(void)
 {
     UBRR0H = (uint8_t)(UBRR_VALUE >> 8);
@@ -68,17 +79,24 @@ void uart_puts(char *s) {
         uart_putc(*s++);
 }
 
+static void timer1_init(void)
+{
+    /* CTC mode (WGM12 = 1) */
+    TCCR1B = (1 << WGM12);
+    /* Prescaler 64 (CS11=1, CS10=1) */
+    TCCR1B |= (1 << CS11) | (1 << CS10);
+    /* Compare value: (16MHz x 20ms) / (64 x 1000) - 1 = 5000 - 1 */
+    OCR1A = 4999;
+    /* Enable interrupt */
+    TIMSK1 = (1 << OCIE1A);
+    SREG |= (1 << 7);
+}
+
 int main(void)
 {
     uart_init();
     adc_init();
+    timer1_init();
 
-    while (1) {
-        uint16_t temp_raw = adc_read_temp();
-        /* T = (ADC - TOS) / k, using integer math (k ~= 1.22) (p.256)*/
-        int16_t temp = (int16_t)(((int32_t)(temp_raw - TEMP_TOS) * 100) / TEMP_K_X100);
-        uart_print_dec(temp);
-        uart_puts("\r\n");
-        _delay_ms(20);
-    }
+    while (1) {}
 }
