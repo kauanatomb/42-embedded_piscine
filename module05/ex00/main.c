@@ -42,13 +42,32 @@ static uint8_t adc_read(void)
     return ADCH; /* 8 MSBs */
 }
 
+// each event on hardware has its own vector number
+// 12 - 1 -> timer1 compare match A
+void __vector_11(void) __attribute__((signal, used));
+void __vector_11(void)
+{
+    uart_print_hex(adc_read());
+}
+
+static void timer1_init(void)
+{
+    /* CTC mode (WGM12 = 1) */
+    TCCR1B = (1 << WGM12);
+    /* Prescaler 64 (CS11=1, CS10=1) */
+    TCCR1B |= (1 << CS11) | (1 << CS10);
+    /* Compare value: (16MHz x 20ms) / (64 x 1000) - 1 = 5000 - 1 */
+    OCR1A = 4999;
+    /* Enable interrupt */
+    TIMSK1 = (1 << OCIE1A);
+    SREG |= (1 << 7);
+}
+
 int main(void)
 {
     uart_init();
     adc_init();
+    timer1_init();
 
-    while (1) {
-        uart_print_hex(adc_read());
-        _delay_ms(20);
-    }
+    while (1) {}
 }
