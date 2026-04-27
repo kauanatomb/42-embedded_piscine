@@ -1,18 +1,7 @@
 #include "uart.h"
 
-#define TEMP_TOS 324
-#define TEMP_K_X100 122
-
-// each event on hardware has its own vector number
-// 12 - 1 -> timer1 compare match A
-void __vector_11(void) __attribute__((signal, used));
-void __vector_11(void)
-{
-    uint16_t temp_raw = adc_read_temp();
-    int16_t temp = (int16_t)(((int32_t)(temp_raw - TEMP_TOS) * 100) / TEMP_K_X100);
-    uart_print_dec(temp);
-    uart_puts("\r\n");
-}
+// #define TEMP_TOS 292
+// #define TEMP_K_X100 0.99
 
 static void uart_init(void)
 {
@@ -77,6 +66,18 @@ static uint16_t adc_read_temp(void)
 void uart_puts(char *s) {
     while(*s)
         uart_putc(*s++);
+}
+
+// each event on hardware has its own vector number
+// 12 - 1 -> timer1 compare match A
+void __vector_11(void) __attribute__((signal, used));
+void __vector_11(void)
+{
+    uint16_t temp_raw = adc_read_temp();
+    // int16_t temp = (int16_t)(((temp_raw - TEMP_TOS)) / TEMP_K_X100);
+    int16_t temp = (temp_raw - 364);
+    uart_print_dec(temp);
+    uart_puts("\r\n");
 }
 
 static void timer1_init(void)
