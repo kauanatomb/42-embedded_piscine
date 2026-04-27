@@ -436,7 +436,7 @@ void	__vector_19(void) // USART data register empty ISR
 	}
 	UDR0 = tx_buf[tx_tail];
 	tx_tail = tx_next(tx_tail);
-}uart_tx_push_buf(g_hex_status, 6);
+}
 
 /*
 ** TWI (I2C) interrupt ISR — fires every time the TWI hardware completes
@@ -560,7 +560,7 @@ int	main(void)
 	timer1_init();
 	SREG = (1 << 7);
 
-	uart_tx_push_buf((volatile uint8_t *)"Starting up...\r\n", 16);
+	uart_tx_push_buf((volatile uint8_t *)"Starting...\r\n", 13);
 	while (1)
 		;
 }
