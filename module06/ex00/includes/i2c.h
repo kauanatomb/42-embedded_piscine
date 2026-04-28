@@ -3,7 +3,7 @@
 
 #include <avr/io.h>
 
-// I2C status codes (TWSR masked with 0xF8)
+// I2C status codes (TWSR masked with 0xF8) p.228
 typedef enum e_i2c_status
 {
 	I2C_START_OK   = 0x08, // START condition transmitted, bus acquired

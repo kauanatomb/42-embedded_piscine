@@ -55,7 +55,7 @@ void	i2c_load(
 ** while a STOP is in progress silently cancels it, leaving the bus hung.
 ** TWSTO is hardware-cleared by the peripheral once the STOP is transmitted
 ** (~10 µs at 100 kHz — at most ~160 cycles). From this point the TWI ISR
-** (__vector_24) owns the bus and drives the full transaction autonomously.
+** (__vector_24) owns the bus and drives the full transaction autonomously. p.226
 */
 void	i2c_start(void)
 {
@@ -68,7 +68,7 @@ void	i2c_start(void)
 ** Release the I2C bus by transmitting a STOP condition.
 ** Clears TWIE so no further TWI interrupts fire after this point.
 ** TWSTO is cleared automatically by hardware once the STOP is transmitted;
-** do not poll it here — i2c_start() guards against re-entry.
+** do not poll it here — i2c_start() guards against re-entry. p.229
 */
 void	i2c_stop(void)
 {
