@@ -86,6 +86,13 @@ void on_aht20_data(uint8_t *data, uint8_t len, uint8_t ok)
 	if (!ok)
 	{
 		g_phase = AHT20_BOOT;
+		g_measurement_count = 0;
+		g_measurements[0] = 0;
+		g_measurements[1] = 0;
+		g_measurements[2] = 0;
+		g_measurements[3] = 0;
+		g_measurements[4] = 0;
+		g_measurements[5] = 0;
 		uart_tx_push_buf((volatile uint8_t *)ERR_MSG, sizeof(ERR_MSG) - 1);
 		return ;
 	}
@@ -123,8 +130,8 @@ void on_aht20_data(uint8_t *data, uint8_t len, uint8_t ok)
 	raw_temp /= g_measurement_count;
 	raw_hum  /= g_measurement_count;
 
-	uint32_t temp10 = (raw_temp * 2000UL) / 1048576UL - 500UL; // tenths of °C
-	uint32_t hum10  = (raw_hum  * 1000UL) / 1048576UL;         // tenths of %RH
+	uint32_t temp10 = ((raw_temp * 2000UL + 524288UL) / 1048576UL) - 500UL;
+	uint32_t hum10  = (raw_hum  * 1000UL + 524288UL) / 1048576UL;
 
 
 
