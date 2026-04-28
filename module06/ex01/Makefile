@@ -3,7 +3,7 @@ F_CPU = 16000000UL
 CC = avr-gcc
 OBJCOPY = avr-objcopy
 DUDE = avrdude
-DEVISE = /dev/tty.usbserial-10
+DEVISE = /dev/ttyUSB0
 UART_BAUDRATE = 115200
 
 CFLAGS = -mmcu=$(MCU) -DF_CPU=$(F_CPU) -Os

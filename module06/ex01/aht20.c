@@ -71,7 +71,6 @@ void on_aht20_data(uint8_t *data, uint8_t len, uint8_t ok)
 		return ;
 	}
 	print_hex_value(data, len);
-	
 	g_tick  = 0;
 	g_phase = AHT20_POLL;
 }
@@ -101,28 +100,25 @@ void on_aht20_triggered(uint8_t *data, uint8_t len, uint8_t ok)
 /*
 ** Callback: invoked by the TWI ISR once the initialisation command
 ** (0xBE 0x08 0x00) has been successfully transmitted to the AHT20.
-** Immediately chains into the first measurement trigger without waiting
-** for another timer tick, since the sensor is already ready after init.
-** The trigger callback (on_aht20_triggered) then opens the 80 ms window.
+** On success, it marks the init as complete and moves the state machine
+** to AHT20_INIT so the timer ISR can send the first trigger on the next
+** 40 ms tick.
 **
 ** On error: resets phase to AHT20_BOOT to retry initialisation on the
 ** next timer tick (40 ms later).
 */
+
 void on_aht20_init(uint8_t *data, uint8_t len, uint8_t ok)
 {
-	static const uint8_t trigger[] = {0xAC, 0x33, 0x00};
-
 	(void)data; (void)len;
+	
 	if (!ok)
 	{
 		g_phase = AHT20_BOOT;
 		return ;
 	}
-
-	// Immediately trigger — on_aht20_triggered will open the 80ms window
-	g_phase = AHT20_BUSY;
-	i2c_load(AHT20, trigger, 3, NULL, 0, on_aht20_triggered);
-	i2c_start();
+	g_tick = 0;
+	g_phase = AHT20_INIT;
 }
 
 /*
@@ -162,6 +158,13 @@ void    __vector_11(void)
 		g_tick = 0;
 		g_phase = AHT20_BUSY;
 		i2c_load(AHT20, init_cmd, 3, NULL, 0, on_aht20_init);
+		i2c_start();
+	}
+	else if (g_phase == AHT20_INIT && g_tick >= 1)     // 1 × 40ms = 40ms
+	{
+		g_tick = 0;
+		g_phase = AHT20_BUSY;
+		i2c_load(AHT20, trigger_cmd, 3, NULL, 0, on_aht20_triggered);
 		i2c_start();
 	}
 	else if (g_phase == AHT20_CONVERT && g_tick >= 2)  // 2 × 40ms = 80ms

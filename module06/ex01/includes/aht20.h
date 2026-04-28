@@ -2,6 +2,7 @@
 #define AHT20_H
 
 #include <avr/io.h>
+#include <avr/interrupt.h>
 
 // I2C device address of the AHT20 (c.f. AHT20 DS, p.8, section 5.3)
 #define AHT20	0x38
@@ -12,6 +13,7 @@
 typedef enum e_aht20_phase
 {
 	AHT20_BOOT,     // waiting 40ms after power-on
+	AHT20_INIT,     // init completed, wait 40ms before first trigger
 	AHT20_BUSY,     // I2C transaction in progress, timer idles
 	AHT20_CONVERT,  // waiting 80ms for conversion (2 ticks × 40ms)
 	AHT20_POLL,     // waiting 2s between measurements (50 ticks × 40ms)
