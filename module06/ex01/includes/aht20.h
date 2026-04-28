@@ -2,7 +2,6 @@
 #define AHT20_H
 
 #include <avr/io.h>
-#include <avr/interrupt.h>
 
 // I2C device address of the AHT20 (c.f. AHT20 DS, p.8, section 5.3)
 #define AHT20	0x38
